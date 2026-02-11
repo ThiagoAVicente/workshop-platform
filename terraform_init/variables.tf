@@ -5,9 +5,9 @@ variable "aws_region" {
 }
 
 variable "state_bucket_name" {
-  description = "Name of the S3 bucket for Terraform state storage (must be globally unique)"
+  description = "Name of the S3 bucket for Terraform state storage (must be globally unique). If not provided, will use 'workshop-ua-<environment>-terraform-state'"
   type        = string
-  default     = "workshop-ua-terraform-state-bucket"
+  default     = ""
 }
 
 variable "dynamodb_table_name" {

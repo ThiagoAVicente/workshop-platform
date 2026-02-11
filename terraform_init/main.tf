@@ -13,9 +13,14 @@ provider "aws" {
   region = var.aws_region
 }
 
+# Compute bucket name based on environment if not explicitly provided
+locals {
+  state_bucket_name = var.state_bucket_name != "" ? var.state_bucket_name : "workshop-ua-${var.environment}-terraform-state"
+}
+
 # S3 bucket for Terraform state
 resource "aws_s3_bucket" "terraform_state" {
-  bucket = var.state_bucket_name
+  bucket = local.state_bucket_name
 
   tags = {
     Name        = "Terraform State Bucket"
