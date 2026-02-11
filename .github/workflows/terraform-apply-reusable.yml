@@ -52,7 +52,7 @@ jobs:
       - name: Terraform Init
         run: |
           terraform init \
-            -backend-config="key=platform/${{ inputs.environment }}/terraform.tfstate"
+            -backend-config="bucket=workshop-ua-${{ inputs.environment }}-terraform-state"
         working-directory: ${{ inputs.tf_working_dir }}
 
       - name: Terraform Validate

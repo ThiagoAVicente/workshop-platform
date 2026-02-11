@@ -97,7 +97,7 @@ jobs:
         id: init
         run: |
           terraform init \
-            -backend-config="key=platform/${{ matrix.environment }}/terraform.tfstate"
+            -backend-config="bucket=workshop-ua-${{ matrix.environment }}-terraform-state"
         working-directory: ${{ env.TF_WORKING_DIR }}
 
       - name: Terraform Validate
