@@ -1,0 +1,7 @@
+# Example terraform.tfvars file
+# Copy this file to terraform.tfvars and update with your values
+
+aws_region          = "us-east-1"
+state_bucket_name   = "my-project-terraform-state"  # Must be globally unique
+dynamodb_table_name = "terraform-state-locks"
+environment         = "shared"
