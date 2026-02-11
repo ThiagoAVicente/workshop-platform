@@ -1,0 +1,36 @@
+# AWS Configuration
+aws_region  = "eu-west-1"
+environment = "production"
+
+# EKS Cluster Configuration
+cluster_name       = "workshop-eks-prod"
+kubernetes_version = "1.31"
+
+# VPC Configuration
+vpc_cidr                = "10.0.0.0/16"
+availability_zones      = ["eu-west-1a", "eu-west-1b", "eu-west-1c"]
+public_subnet_cidrs     = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+private_subnet_cidrs    = ["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]
+
+# EKS Endpoint Access
+cluster_endpoint_private_access = true
+cluster_endpoint_public_access  = true
+
+# Control Plane Logging
+cluster_log_types          = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+cluster_log_retention_days = 7
+
+# Cost Optimization (set to false for production HA)
+single_nat_gateway = true
+enable_nat_gateway = true
+
+# Fargate Namespaces
+# Add additional namespaces beyond kube-system and default if needed
+fargate_namespaces = ["kube-system", "default", "application"]
+
+# Additional Tags
+tags = {
+  Project = "Workshop Platform"
+  Owner   = "Platform Team"
+  CostCenter = "Engineering"
+}
