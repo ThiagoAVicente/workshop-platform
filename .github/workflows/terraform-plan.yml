@@ -74,7 +74,8 @@ jobs:
     environment: ${{ matrix.environment }}
     strategy:
       matrix:
-        environment: [dev, stg, prd]
+        #environment: [dev, stg, prd]
+        environment: [dev]
       fail-fast: false
 
     steps:
