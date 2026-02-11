@@ -28,29 +28,30 @@ jobs:
       aws_region: eu-west-1
 
   # Deploy to Staging (depends on dev)
-  deploy-stg:
-    name: Deploy Staging
-    needs: deploy-dev
-    uses: ./.github/workflows/terraform-apply-reusable.yml
-    with:
-      environment: stg
-      tf_version: "1.9"
-      aws_region: eu-west-1
+  #deploy-stg:
+  #  name: Deploy Staging
+  #  needs: deploy-dev
+  #  uses: ./.github/workflows/terraform-apply-reusable.yml
+  #  with:
+  #    environment: stg
+  #    tf_version: "1.9"
+  #    aws_region: eu-west-1
 
   # Deploy to Production (depends on stg)
-  deploy-prd:
-    name: Deploy Production
-    needs: deploy-stg
-    uses: ./.github/workflows/terraform-apply-reusable.yml
-    with:
-      environment: prd
-      tf_version: "1.9"
-      aws_region: eu-west-1
+  #deploy-prd:
+  #  name: Deploy Production
+  #  needs: deploy-stg
+  #  uses: ./.github/workflows/terraform-apply-reusable.yml
+  #  with:
+  #    environment: prd
+  #    tf_version: "1.9"
+  #    aws_region: eu-west-1
 
   # Final summary
   deployment-complete:
     name: Deployment Complete
-    needs: deploy-prd
+    #needs: deploy-prd
+    needs: deploy-dev
     runs-on: ubuntu-latest
     steps:
       - name: Create final summary
