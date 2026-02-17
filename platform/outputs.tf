@@ -197,3 +197,17 @@ output "aws_account_id" {
   description = "AWS account ID"
   value       = data.aws_caller_identity.current.account_id
 }
+
+# ============================================================================
+# ECR Outputs
+# ============================================================================
+
+output "ecr_repository_urls" {
+  description = "Map of project names to ECR repository URLs"
+  value       = length(module.ecr) > 0 ? module.ecr[0].repository_urls : {}
+}
+
+output "ecr_repository_arns" {
+  description = "Map of project names to ECR repository ARNs"
+  value       = length(module.ecr) > 0 ? module.ecr[0].repository_arns : {}
+}
