@@ -172,7 +172,7 @@ output "lb_controller_service_account_annotation" {
 
 output "lb_controller_helm_install_command" {
   description = "Helm command to install AWS Load Balancer Controller with IRSA"
-  value = <<-EOT
+  value       = <<-EOT
     helm repo add eks https://aws.github.io/eks-charts
     helm repo update
     helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
@@ -196,4 +196,18 @@ output "aws_region" {
 output "aws_account_id" {
   description = "AWS account ID"
   value       = data.aws_caller_identity.current.account_id
+}
+
+# ============================================================================
+# ECR Outputs
+# ============================================================================
+
+output "ecr_repository_urls" {
+  description = "Map of project names to ECR repository URLs"
+  value       = length(module.ecr) > 0 ? module.ecr[0].repository_urls : {}
+}
+
+output "ecr_repository_arns" {
+  description = "Map of project names to ECR repository ARNs"
+  value       = length(module.ecr) > 0 ? module.ecr[0].repository_arns : {}
 }
