@@ -10,6 +10,8 @@ Production-grade AWS infrastructure for the workshop platform, featuring multi-a
 - [Bootstrap Process](#bootstrap-process)
 - [GitHub Setup](#github-setup)
 - [Local Development](#local-development)
+- [ECR Registries](#ecr-registries)
+- [Aurora PostgreSQL](#aurora-postgresql)
 - [CI/CD Pipelines](#cicd-pipelines)
 - [Emergency Procedures](#emergency-procedures)
 - [Project Structure](#project-structure)
@@ -20,6 +22,7 @@ This repository contains Terraform infrastructure code for deploying a productio
 
 - **Amazon EKS** with Fargate for serverless container orchestration
 - **Amazon ECR** for container image registries with lifecycle policies
+- **Amazon Aurora PostgreSQL** with hot standby, managed passwords in Secrets Manager, and AWS Backup
 - **Multi-account architecture** for complete environment isolation
 - **Automated CI/CD** with GitHub Actions
 - **Remote state management** with S3 and DynamoDB
@@ -412,6 +415,76 @@ aws eks update-kubeconfig --region eu-west-1 --name workshop-eks-dev
 kubectl apply -f deployment.yaml -n spring-petshop
 ```
 
+## Aurora PostgreSQL
+
+The platform includes an Aurora PostgreSQL module that deploys a cluster with a writer instance, a hot standby reader for automatic failover, and an AWS Backup plan with configurable schedule.
+
+### Configuration
+
+Enable Aurora and configure it in your environment tfvars file:
+
+```hcl
+# platform/environments/dev.tfvars
+enable_aurora                   = true
+aurora_instance_class           = "db.r6g.large"
+aurora_deletion_protection      = false
+aurora_skip_final_snapshot      = true
+aurora_backup_retention_period  = 3
+aurora_backup_schedule          = "cron(0 2 * * ? *)"
+aurora_backup_delete_after_days = 14
+```
+
+### Password Management
+
+The master password is **automatically generated** by RDS and stored in AWS Secrets Manager. No manual password handling is required.
+
+```bash
+# Retrieve the secret ARN
+terraform output aurora_master_user_secret_arn
+
+# Retrieve the actual credentials
+aws secretsmanager get-secret-value \
+  --secret-id $(terraform output -raw aurora_master_user_secret_arn) \
+  --query SecretString --output text
+```
+
+The secret JSON contains `username` and `password` fields. Services running in EKS can access the credentials using:
+
+- **AWS Secrets Manager CSI Driver** — mounts the secret as a volume in the pod
+- **Application-level SDK calls** — read from Secrets Manager using IRSA credentials
+
+### Backup Strategy
+
+The module implements two layers of backup:
+
+| Layer | Mechanism | Default Schedule | Retention |
+|-------|-----------|-----------------|-----------|
+| Aurora built-in | Continuous automated backups | Daily (03:00-04:00 UTC) | `aurora_backup_retention_period` (default: 7 days) |
+| AWS Backup | Scheduled snapshots to vault | `aurora_backup_schedule` (default: daily at 02:00 UTC) | `aurora_backup_delete_after_days` (default: 35 days) |
+
+The backup frequency is configurable via the `aurora_backup_schedule` cron expression (e.g., `"cron(0 */6 * * ? *)"` for every 6 hours).
+
+### Aurora Outputs
+
+After applying, retrieve the cluster endpoints and connection details:
+
+```bash
+# Writer endpoint (for read/write traffic)
+terraform output aurora_cluster_endpoint
+
+# Reader endpoint (for read-only traffic)
+terraform output aurora_reader_endpoint
+
+# Database name and port
+terraform output aurora_database_name
+terraform output aurora_port
+
+# Secret ARN for password retrieval
+terraform output aurora_master_user_secret_arn
+```
+
+For detailed module documentation, see [platform/modules/aurora/README.md](platform/modules/aurora/README.md).
+
 ## CI/CD Pipelines
 
 The repository includes three automated workflows:
@@ -582,6 +655,11 @@ workshop-platform/
 │   │   └── prd.tfvars
 │   │
 │   ├── modules/                           # Reusable modules
+│   │   ├── aurora/                        # Aurora PostgreSQL module
+│   │   │   ├── main.tf
+│   │   │   ├── variables.tf
+│   │   │   ├── outputs.tf
+│   │   │   └── README.md
 │   │   └── ecr/                           # ECR registry module
 │   │       ├── main.tf
 │   │       ├── variables.tf
@@ -594,6 +672,7 @@ workshop-platform/
 │   ├── security-groups.tf                 # Security groups
 │   ├── iam.tf                             # IAM roles and policies
 │   ├── eks.tf                             # EKS cluster
+│   ├── aurora.tf                          # Aurora PostgreSQL
 │   ├── ecr.tf                             # ECR registries
 │   ├── ci_users.tf                        # Per-project CI/CD users
 │   ├── fargate.tf                         # Fargate profiles

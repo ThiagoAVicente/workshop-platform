@@ -99,3 +99,85 @@ variable "projects" {
   type        = list(string)
   default     = []
 }
+
+# ============================================================================
+# Aurora PostgreSQL Configuration
+# ============================================================================
+
+variable "enable_aurora" {
+  description = "Enable Aurora PostgreSQL cluster deployment"
+  type        = bool
+  default     = false
+}
+
+variable "aurora_engine_version" {
+  description = "Aurora PostgreSQL engine version"
+  type        = string
+  default     = "16.6"
+}
+
+variable "aurora_min_capacity" {
+  description = "Minimum Aurora Serverless v2 capacity in ACUs (0.5 to 128)"
+  type        = number
+  default     = 0.5
+}
+
+variable "aurora_max_capacity" {
+  description = "Maximum Aurora Serverless v2 capacity in ACUs (0.5 to 128)"
+  type        = number
+  default     = 4
+}
+
+variable "aurora_database_name" {
+  description = "Name of the default database to create in Aurora"
+  type        = string
+  default     = "workshop"
+}
+
+variable "aurora_master_username" {
+  description = "Master username for the Aurora cluster"
+  type        = string
+  default     = "workshop_admin"
+}
+
+variable "aurora_port" {
+  description = "Port for the Aurora PostgreSQL cluster"
+  type        = number
+  default     = 5432
+}
+
+variable "aurora_backup_retention_period" {
+  description = "Number of days to retain Aurora automated backups"
+  type        = number
+  default     = 7
+}
+
+variable "aurora_backup_schedule" {
+  description = "Cron expression for AWS Backup schedule (default: daily at 02:00 UTC)"
+  type        = string
+  default     = "cron(0 2 * * ? *)"
+}
+
+variable "aurora_backup_delete_after_days" {
+  description = "Number of days after which AWS Backup recovery points are deleted"
+  type        = number
+  default     = 35
+}
+
+variable "aurora_deletion_protection" {
+  description = "Enable deletion protection on the Aurora cluster"
+  type        = bool
+  default     = true
+}
+
+variable "aurora_skip_final_snapshot" {
+  description = "Skip final snapshot when destroying the Aurora cluster"
+  type        = bool
+  default     = false
+}
+
+variable "tags" {
+  description = "Additional tags to apply to all resources"
+  type        = map(string)
+  default     = {}
+}
