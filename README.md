@@ -19,6 +19,7 @@ Production-grade AWS infrastructure for the workshop platform, featuring multi-a
 This repository contains Terraform infrastructure code for deploying a production-grade Kubernetes platform on AWS. The platform uses:
 
 - **Amazon EKS** with Fargate for serverless container orchestration
+- **Amazon ECR** for container image registries with lifecycle policies
 - **Multi-account architecture** for complete environment isolation
 - **Automated CI/CD** with GitHub Actions
 - **Remote state management** with S3 and DynamoDB
@@ -302,6 +303,65 @@ terraform init -backend-config="bucket=workshop-ua-dev-terraform-state" -reconfi
 terraform plan -var-file="environments/dev.tfvars"
 ```
 
+## ECR Registries
+
+The platform includes an ECR module that creates container image registries for your projects. Each registry is provisioned with a lifecycle policy to manage image retention.
+
+### Configuration
+
+Add project names to the `ecr_project_names` list in your environment tfvars file:
+
+```hcl
+# platform/environments/dev.tfvars
+ecr_project_names = ["spring-petshop", "my-api", "my-frontend"]
+```
+
+One ECR repository is created per project name.
+
+### Image Lifecycle Policy
+
+Each repository enforces the following retention rules:
+
+| Tag Pattern  | Retention                          |
+|--------------|------------------------------------|
+| `*RELEASE`   | Kept indefinitely                  |
+| `*SNAPSHOT`  | Only the latest 5 images are kept  |
+
+Images with tags ending in `RELEASE` (e.g., `v1.0.0-RELEASE`) are never expired. Images with tags ending in `SNAPSHOT` (e.g., `v1.0.0-SNAPSHOT`) are automatically cleaned up, keeping only the 5 most recent.
+
+### ECR Outputs
+
+After applying, retrieve the ECR repository URLs and ARNs:
+
+```bash
+# Get all ECR repository URLs
+terraform output ecr_repository_urls
+
+# Example output:
+# {
+#   "spring-petshop" = "123456789012.dkr.ecr.eu-west-1.amazonaws.com/spring-petshop"
+# }
+
+# Get all ECR repository ARNs
+terraform output ecr_repository_arns
+```
+
+### Authenticating with ECR
+
+To push images to a registry:
+
+```bash
+# Authenticate Docker with ECR
+aws ecr get-login-password --region eu-west-1 --profile workshop-dev | \
+  docker login --username AWS --password-stdin 123456789012.dkr.ecr.eu-west-1.amazonaws.com
+
+# Tag and push an image
+docker tag my-app:latest 123456789012.dkr.ecr.eu-west-1.amazonaws.com/spring-petshop:v1.0.0-RELEASE
+docker push 123456789012.dkr.ecr.eu-west-1.amazonaws.com/spring-petshop:v1.0.0-RELEASE
+```
+
+For detailed module documentation, see [platform/modules/ecr/README.md](platform/modules/ecr/README.md).
+
 ## CI/CD Pipelines
 
 The repository includes three automated workflows:
@@ -471,12 +531,20 @@ workshop-platform/
 │   │   ├── stg.tfvars
 │   │   └── prd.tfvars
 │   │
+│   ├── modules/                           # Reusable modules
+│   │   └── ecr/                           # ECR registry module
+│   │       ├── main.tf
+│   │       ├── variables.tf
+│   │       ├── outputs.tf
+│   │       └── README.md
+│   │
 │   ├── backend.tf                         # Remote state config
 │   ├── provider.tf                        # Terraform providers
 │   ├── vpc.tf                             # VPC and networking
 │   ├── security-groups.tf                 # Security groups
 │   ├── iam.tf                             # IAM roles and policies
 │   ├── eks.tf                             # EKS cluster
+│   ├── ecr.tf                             # ECR registries
 │   ├── fargate.tf                         # Fargate profiles
 │   ├── helm-charts.tf                     # AWS LB Controller
 │   ├── variables.tf                       # Input variables
@@ -500,9 +568,7 @@ workshop-platform/
 ### Documentation
 
 - **[platform/README.md](platform/README.md)** - Platform infrastructure details
-- **[platform/ENVIRONMENTS.md](platform/ENVIRONMENTS.md)** - Multi-environment setup
 - **[.github/CI_CD_SETUP.md](.github/CI_CD_SETUP.md)** - CI/CD pipeline guide
-- **[CLAUDE.md](CLAUDE.md)** - Development guidelines
 
 ## Best Practices
 
@@ -573,7 +639,7 @@ kubectl get nodes
 
 ## Getting Help
 
-- **Documentation**: Check [platform/README.md](platform/README.md) and [platform/ENVIRONMENTS.md](platform/ENVIRONMENTS.md)
+- **Documentation**: Check [platform/README.md](platform/README.md)
 - **CI/CD Issues**: See [.github/CI_CD_SETUP.md](.github/CI_CD_SETUP.md)
 - **Terraform Docs**: [terraform.io/docs](https://terraform.io/docs)
 - **AWS EKS Guide**: [docs.aws.amazon.com/eks](https://docs.aws.amazon.com/eks/latest/userguide/)
