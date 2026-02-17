@@ -73,6 +73,11 @@ resource "aws_iam_role_policy_attachment" "fargate_AmazonEKSFargatePodExecutionR
   role       = aws_iam_role.fargate.name
 }
 
+resource "aws_iam_role_policy_attachment" "fargate_AmazonEC2ContainerRegistryReadOnly" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  role       = aws_iam_role.fargate.name
+}
+
 # ============================================================================
 # AWS Load Balancer Controller IAM Role (IRSA)
 # ============================================================================
