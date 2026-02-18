@@ -250,3 +250,22 @@ output "aurora_master_user_secret_arn" {
   description = "ARN of the Secrets Manager secret containing the Aurora master password"
   value       = length(module.aurora) > 0 ? module.aurora[0].master_user_secret_arn : ""
 }
+
+# ============================================================================
+# Workshop Namespace Outputs
+# ============================================================================
+
+output "workshop_deployer_role_arn" {
+  description = "IAM role ARN for the workshop namespace deployer"
+  value       = aws_iam_role.workshop_deployer.arn
+}
+
+output "workshop_deployer_service_account" {
+  description = "Name of the workshop deployer Kubernetes ServiceAccount"
+  value       = kubernetes_service_account.workshop_deployer.metadata[0].name
+}
+
+output "workshop_deployer_assume_role_command" {
+  description = "Command to assume the workshop deployer role for kubectl access"
+  value       = "aws sts assume-role --role-arn ${aws_iam_role.workshop_deployer.arn} --role-session-name workshop-deploy"
+}

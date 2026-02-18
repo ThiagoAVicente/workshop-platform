@@ -12,6 +12,7 @@ Production-grade AWS infrastructure for the workshop platform, featuring multi-a
 - [Local Development](#local-development)
 - [ECR Registries](#ecr-registries)
 - [Aurora PostgreSQL](#aurora-postgresql)
+- [Workshop Namespace & Deployer](#workshop-namespace--deployer)
 - [CI/CD Pipelines](#cicd-pipelines)
 - [Emergency Procedures](#emergency-procedures)
 - [Project Structure](#project-structure)
@@ -434,6 +435,126 @@ terraform output aurora_master_user_secret_arn
 ```
 
 For detailed module documentation, see [platform/modules/aurora/README.md](platform/modules/aurora/README.md).
+
+## Workshop Namespace & Deployer
+
+The platform creates a `workshop` Kubernetes namespace with a dedicated deployer user that has permissions to manage workloads in that namespace. This is designed for application teams and CI/CD pipelines.
+
+### What's Created
+
+- **Kubernetes namespace** `workshop` with a Fargate profile for serverless pod scheduling
+- **Kubernetes Role** `workshop-deployer` with permissions to manage deployments, services, configmaps, secrets, ingresses, jobs, HPAs, and more
+- **Kubernetes ServiceAccount** `workshop-deployer` (for in-cluster use, annotated with IRSA)
+- **IAM role** `<cluster-name>-workshop-deployer` (for external access)
+- **EKS access entry** mapping the IAM role to the `workshop-deployers` Kubernetes group
+
+### Deployer Permissions
+
+The deployer role can manage the following resources within the `workshop` namespace:
+
+| API Group | Resources |
+|-----------|-----------|
+| `apps` | deployments, replicasets, statefulsets, daemonsets |
+| core | pods, services, configmaps, secrets, serviceaccounts, PVCs |
+| core | pods/log, pods/exec, pods/portforward (debugging) |
+| `networking.k8s.io` | ingresses |
+| `batch` | jobs, cronjobs |
+| `autoscaling` | horizontalpodautoscalers |
+
+### Using the Deployer from kubectl
+
+```bash
+# Get the deployer role ARN
+terraform output workshop_deployer_role_arn
+
+# Assume the role
+eval $(aws sts assume-role \
+  --role-arn $(terraform output -raw workshop_deployer_role_arn) \
+  --role-session-name workshop-deploy \
+  --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' \
+  --output text | awk '{print "export AWS_ACCESS_KEY_ID="$1" AWS_SECRET_ACCESS_KEY="$2" AWS_SESSION_TOKEN="$3}')
+
+# Update kubeconfig and deploy
+aws eks update-kubeconfig --region eu-west-1 --name workshop-eks-dev
+kubectl -n workshop apply -f deployment.yaml
+```
+
+### Using the Deployer in GitHub Actions
+
+To deploy to the `workshop` namespace from another project's GitHub Actions pipeline:
+
+#### 1. Store the deployer role ARN as a repository secret
+
+Get the ARN from Terraform output and add it as a GitHub Actions secret:
+
+```bash
+terraform output -raw workshop_deployer_role_arn
+# Example: arn:aws:iam::123456789012:role/workshop-eks-dev-workshop-deployer
+```
+
+In your application repository, go to **Settings > Secrets and variables > Actions** and add:
+- `EKS_DEPLOYER_ROLE_ARN` — the role ARN from above
+- `AWS_REGION` — `eu-west-1`
+- `EKS_CLUSTER_NAME` — `workshop-eks-dev` (or the relevant environment)
+
+#### 2. Configure IAM trust (if using a different AWS account)
+
+If your GitHub Actions runner uses a different AWS account, you need to update the IAM role's trust policy to allow cross-account assumption. The current trust policy allows any principal in the same account to assume the role.
+
+#### 3. Add a deploy step to your workflow
+
+```yaml
+name: Deploy to EKS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.EKS_DEPLOYER_ROLE_ARN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ secrets.AWS_REGION }} \
+            --name ${{ secrets.EKS_CLUSTER_NAME }}
+
+      - name: Deploy to workshop namespace
+        run: |
+          kubectl -n workshop apply -f k8s/
+```
+
+### Using the ServiceAccount In-Cluster
+
+For workloads running inside the cluster that need to deploy other resources (e.g., ArgoCD, a custom operator):
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  namespace: workshop
+spec:
+  serviceAccountName: workshop-deployer
+  containers:
+    - name: deployer
+      image: bitnami/kubectl:latest
+      command: ["kubectl", "get", "pods", "-n", "workshop"]
+```
+
+The ServiceAccount is annotated with the IAM role for IRSA, so it also has AWS API access.
 
 ## CI/CD Pipelines
 
