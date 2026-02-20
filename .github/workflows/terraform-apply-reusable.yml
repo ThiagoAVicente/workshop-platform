@@ -51,8 +51,7 @@ jobs:
 
       - name: Terraform Init
         run: |
-          terraform init \
-            -backend-config="bucket=workshop-ua-${{ inputs.environment }}-terraform-state"
+          terraform init
         working-directory: ${{ inputs.tf_working_dir }}
 
       - name: Terraform Validate
