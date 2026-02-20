@@ -172,7 +172,7 @@ output "lb_controller_service_account_annotation" {
 
 output "lb_controller_helm_install_command" {
   description = "Helm command to install AWS Load Balancer Controller with IRSA"
-  value = <<-EOT
+  value       = <<-EOT
     helm repo add eks https://aws.github.io/eks-charts
     helm repo update
     helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
