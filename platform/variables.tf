@@ -82,6 +82,12 @@ variable "enable_nat_gateway" {
   default     = true
 }
 
+variable "cluster_admin_arns" {
+  description = "List of IAM principal ARNs to grant EKS cluster admin access (root user is always included)"
+  type        = list(string)
+  default     = []
+}
+
 variable "fargate_namespaces" {
   description = "List of Kubernetes namespaces to create Fargate profiles for"
   type        = list(string)

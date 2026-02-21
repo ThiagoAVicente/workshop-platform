@@ -74,6 +74,55 @@ resource "aws_iam_openid_connect_provider" "cluster" {
 }
 
 # ============================================================================
+# EKS Cluster Admin Access Entries
+# ============================================================================
+
+data "aws_iam_user" "terraform_ci" {
+  user_name = "terraform-ci"
+}
+
+locals {
+  cluster_admin_arns = toset(concat(
+    [
+      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root",
+      data.aws_iam_user.terraform_ci.arn
+    ],
+    var.cluster_admin_arns
+  ))
+}
+
+resource "aws_eks_access_entry" "admin" {
+  for_each = local.cluster_admin_arns
+
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = each.value
+  type          = "STANDARD"
+
+  tags = merge(
+    var.tags,
+    {
+      Name        = "${var.cluster_name}-admin-access"
+      Environment = var.environment
+      ManagedBy   = "Terraform"
+    }
+  )
+}
+
+resource "aws_eks_access_policy_association" "admin" {
+  for_each = local.cluster_admin_arns
+
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = each.value
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+
+  depends_on = [aws_eks_access_entry.admin]
+}
+
+# ============================================================================
 # EKS Addons
 # ============================================================================
 
