@@ -58,7 +58,28 @@ jobs:
         run: terraform validate
         working-directory: ${{ inputs.tf_working_dir }}
 
-      - name: Terraform Plan
+      # ----------------------------------------------------------------
+      # Step 1: EKS Cluster and AWS infrastructure
+      # The Kubernetes/Helm providers depend on the cluster existing,
+      # so we create/update it first with a targeted apply.
+      # ----------------------------------------------------------------
+      - name: "Step 1: Plan - EKS Cluster"
+        run: |
+          terraform plan \
+            -var-file="environments/${{ inputs.environment }}.tfvars" \
+            -target=aws_eks_cluster.main \
+            -out=tfplan-cluster \
+            -input=false
+        working-directory: ${{ inputs.tf_working_dir }}
+
+      - name: "Step 1: Apply - EKS Cluster"
+        run: terraform apply -auto-approve -input=false tfplan-cluster
+        working-directory: ${{ inputs.tf_working_dir }}
+
+      # ----------------------------------------------------------------
+      # Step 2: Full infrastructure (Helm charts, K8s resources, etc.)
+      # ----------------------------------------------------------------
+      - name: "Step 2: Plan - Full Infrastructure"
         run: |
           terraform plan \
             -var-file="environments/${{ inputs.environment }}.tfvars" \
@@ -66,7 +87,7 @@ jobs:
             -input=false
         working-directory: ${{ inputs.tf_working_dir }}
 
-      - name: Terraform Apply
+      - name: "Step 2: Apply - Full Infrastructure"
         run: terraform apply -auto-approve -input=false tfplan
         working-directory: ${{ inputs.tf_working_dir }}
 

@@ -109,7 +109,25 @@ jobs:
         id: account
         run: echo "account_id=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_OUTPUT
 
-      - name: Terraform Plan
+      # ----------------------------------------------------------------
+      # Step 1: Plan EKS Cluster (targeted)
+      # Ensures cluster infrastructure is validated before full plan.
+      # ----------------------------------------------------------------
+      - name: "Step 1: Plan - EKS Cluster"
+        id: plan-cluster
+        run: |
+          terraform plan \
+            -var-file="environments/${{ matrix.environment }}.tfvars" \
+            -target=aws_eks_cluster.main \
+            -no-color \
+            -input=false
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        continue-on-error: true
+
+      # ----------------------------------------------------------------
+      # Step 2: Full Plan (Helm charts, K8s resources, etc.)
+      # ----------------------------------------------------------------
+      - name: "Step 2: Plan - Full Infrastructure"
         id: plan
         run: |
           terraform plan \
@@ -123,6 +141,7 @@ jobs:
         uses: actions/github-script@v7
         if: github.event_name == 'pull_request'
         env:
+          PLAN_CLUSTER: ${{ steps.plan-cluster.outputs.stdout }}
           PLAN: ${{ steps.plan.outputs.stdout }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -142,9 +161,19 @@ jobs:
 
             </details>
 
-            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+            #### Step 1: EKS Cluster Plan 📖\`${{ steps.plan-cluster.outcome }}\`
 
-            <details><summary>Show Plan</summary>
+            <details><summary>Show Cluster Plan</summary>
+
+            \`\`\`terraform
+            ${process.env.PLAN_CLUSTER}
+            \`\`\`
+
+            </details>
+
+            #### Step 2: Full Infrastructure Plan 📖\`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Full Plan</summary>
 
             \`\`\`terraform
             ${process.env.PLAN}
@@ -162,5 +191,5 @@ jobs:
             })
 
       - name: Check Plan Status
-        if: steps.plan.outcome == 'failure'
+        if: steps.plan-cluster.outcome == 'failure' || steps.plan.outcome == 'failure'
         run: exit 1

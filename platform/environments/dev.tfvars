@@ -4,8 +4,8 @@ aws_region  = "eu-west-1"
 environment = "dev"
 
 # EKS Cluster
-cluster_name       = "workshop-eks-dev"
-kubernetes_version = "1.31"
+cluster_name       = "workshop-eks-cluster"
+kubernetes_version = "1.35"
 
 # VPC Configuration
 vpc_cidr             = "10.0.0.0/16"

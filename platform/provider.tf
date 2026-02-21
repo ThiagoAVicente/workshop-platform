@@ -33,9 +33,18 @@ provider "aws" {
   }
 }
 
+# Data sources for current AWS account and region
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+# Read cluster info via data source (decoupled from managed resource lifecycle)
+data "aws_eks_cluster" "provider_config" {
+  name = var.cluster_name
+}
+
 provider "kubernetes" {
-  host                   = aws_eks_cluster.main.endpoint
-  cluster_ca_certificate = base64decode(aws_eks_cluster.main.certificate_authority[0].data)
+  host                   = data.aws_eks_cluster.provider_config.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.provider_config.certificate_authority[0].data)
 
   exec {
     api_version = "client.authentication.k8s.io/v1beta1"
@@ -44,7 +53,7 @@ provider "kubernetes" {
       "eks",
       "get-token",
       "--cluster-name",
-      aws_eks_cluster.main.name,
+      var.cluster_name,
       "--region",
       var.aws_region
     ]
@@ -53,8 +62,8 @@ provider "kubernetes" {
 
 provider "helm" {
   kubernetes {
-    host                   = aws_eks_cluster.main.endpoint
-    cluster_ca_certificate = base64decode(aws_eks_cluster.main.certificate_authority[0].data)
+    host                   = data.aws_eks_cluster.provider_config.endpoint
+    cluster_ca_certificate = base64decode(data.aws_eks_cluster.provider_config.certificate_authority[0].data)
 
     exec {
       api_version = "client.authentication.k8s.io/v1beta1"
@@ -63,14 +72,10 @@ provider "helm" {
         "eks",
         "get-token",
         "--cluster-name",
-        aws_eks_cluster.main.name,
+        var.cluster_name,
         "--region",
         var.aws_region
       ]
     }
   }
 }
-
-# Data sources for current AWS account and region
-data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
