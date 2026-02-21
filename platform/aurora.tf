@@ -1,7 +1,6 @@
 # Aurora PostgreSQL Cluster
 module "aurora" {
   source = "./modules/aurora"
-  count  = var.enable_aurora ? 1 : 0
 
   cluster_name               = var.cluster_name
   engine_version             = var.aurora_engine_version

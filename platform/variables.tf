@@ -104,12 +104,6 @@ variable "projects" {
 # Aurora PostgreSQL Configuration
 # ============================================================================
 
-variable "enable_aurora" {
-  description = "Enable Aurora PostgreSQL cluster deployment"
-  type        = bool
-  default     = false
-}
-
 variable "aurora_engine_version" {
   description = "Aurora PostgreSQL engine version"
   type        = string
@@ -125,7 +119,7 @@ variable "aurora_min_capacity" {
 variable "aurora_max_capacity" {
   description = "Maximum Aurora Serverless v2 capacity in ACUs (0.5 to 128)"
   type        = number
-  default     = 4
+  default     = 1
 }
 
 variable "aurora_database_name" {

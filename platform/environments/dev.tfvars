@@ -32,8 +32,6 @@ fargate_namespaces = ["kube-system", "default", "development", "workshop"]
 projects = ["spring-petshop"]
 
 # Aurora PostgreSQL (dev: relaxed protection for dev workflows)
-enable_aurora                   = true
-aurora_instance_class           = "db.r6g.large"
 aurora_deletion_protection      = false
 aurora_skip_final_snapshot      = true
 aurora_backup_retention_period  = 3

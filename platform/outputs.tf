@@ -247,35 +247,35 @@ output "external_secrets_role_arn" {
 
 output "aurora_cluster_endpoint" {
   description = "Writer endpoint for the Aurora PostgreSQL cluster"
-  value       = length(module.aurora) > 0 ? module.aurora[0].cluster_endpoint : ""
+  value       = module.aurora.cluster_endpoint
 }
 
 output "aurora_reader_endpoint" {
   description = "Reader endpoint for the Aurora PostgreSQL cluster"
-  value       = length(module.aurora) > 0 ? module.aurora[0].reader_endpoint : ""
+  value       = module.aurora.reader_endpoint
 }
 
 output "aurora_cluster_arn" {
   description = "ARN of the Aurora PostgreSQL cluster"
-  value       = length(module.aurora) > 0 ? module.aurora[0].cluster_arn : ""
+  value       = module.aurora.cluster_arn
 }
 
 output "aurora_port" {
   description = "Port the Aurora PostgreSQL cluster is listening on"
-  value       = length(module.aurora) > 0 ? module.aurora[0].port : 0
+  value       = module.aurora.port
 }
 
 output "aurora_database_name" {
   description = "Name of the default Aurora database"
-  value       = length(module.aurora) > 0 ? module.aurora[0].database_name : ""
+  value       = module.aurora.database_name
 }
 
 output "aurora_security_group_id" {
   description = "Security group ID for the Aurora PostgreSQL cluster"
-  value       = length(module.aurora) > 0 ? module.aurora[0].security_group_id : ""
+  value       = module.aurora.security_group_id
 }
 
 output "aurora_master_user_secret_arn" {
   description = "ARN of the Secrets Manager secret containing the Aurora master password"
-  value       = length(module.aurora) > 0 ? module.aurora[0].master_user_secret_arn : ""
+  value       = module.aurora.master_user_secret_arn
 }

@@ -32,8 +32,6 @@ fargate_namespaces = ["kube-system", "default", "staging", "workshop"]
 projects = []
 
 # Aurora PostgreSQL (staging: production-like with moderate retention)
-enable_aurora                   = true
-aurora_instance_class           = "db.r6g.large"
 aurora_deletion_protection      = true
 aurora_skip_final_snapshot      = false
 aurora_backup_retention_period  = 7
