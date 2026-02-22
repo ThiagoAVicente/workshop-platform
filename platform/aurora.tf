@@ -10,7 +10,7 @@ module "aurora" {
   master_username            = var.aurora_master_username
   vpc_id                     = aws_vpc.main.id
   subnet_ids                 = aws_subnet.private[*].id
-  allowed_security_group_ids = [aws_security_group.cluster.id]
+  allowed_security_group_ids = [aws_security_group.cluster.id, aws_eks_cluster.main.vpc_config[0].cluster_security_group_id]
   port                       = var.aurora_port
   backup_retention_period    = var.aurora_backup_retention_period
   backup_schedule            = var.aurora_backup_schedule
