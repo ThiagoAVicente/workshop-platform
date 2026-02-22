@@ -26,10 +26,10 @@ cluster_log_types          = ["api", "audit", "authenticator"]
 cluster_log_retention_days = 3
 
 # Fargate Namespaces
-fargate_namespaces = ["kube-system", "default", "development", "workshop"]
+fargate_namespaces = ["kube-system", "default"]
 
 # ECR Repositories
-projects = ["spring-petshop"]
+projects = ["spring-petclinic"]
 
 # Aurora PostgreSQL (dev: relaxed protection for dev workflows)
 aurora_deletion_protection      = false
