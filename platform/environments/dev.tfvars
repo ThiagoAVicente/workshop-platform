@@ -37,3 +37,9 @@ aurora_skip_final_snapshot      = true
 aurora_backup_retention_period  = 3
 aurora_backup_schedule          = "cron(0 2 * * ? *)"
 aurora_backup_delete_after_days = 14
+
+# Monitoring
+monitoring_log_retention_days = 3
+
+#clustr admin arns
+cluster_admin_arns = ["arn:aws:iam::723528227814:root"]

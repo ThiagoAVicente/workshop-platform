@@ -279,3 +279,22 @@ output "aurora_master_user_secret_arn" {
   description = "ARN of the Secrets Manager secret containing the Aurora master password"
   value       = module.aurora.master_user_secret_arn
 }
+
+# ============================================================================
+# Monitoring Stack Outputs
+# ============================================================================
+
+output "grafana_role_arn" {
+  description = "IAM role ARN for Grafana IRSA (CloudWatch access)"
+  value       = aws_iam_role.grafana.arn
+}
+
+output "monitoring_log_group_name" {
+  description = "CloudWatch log group name for pod logs"
+  value       = aws_cloudwatch_log_group.pod_logs.name
+}
+
+output "prometheus_endpoint" {
+  description = "Internal Prometheus endpoint for querying metrics"
+  value       = "http://prometheus-server.monitoring.svc.cluster.local:9090"
+}

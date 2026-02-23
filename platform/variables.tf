@@ -170,6 +170,22 @@ variable "aurora_skip_final_snapshot" {
   default     = false
 }
 
+# ============================================================================
+# Monitoring Stack Configuration
+# ============================================================================
+
+variable "grafana_admin_password" {
+  description = "Admin password for Grafana (set via TF_VAR_grafana_admin_password in CI)"
+  type        = string
+  sensitive   = true
+}
+
+variable "monitoring_log_retention_days" {
+  description = "Number of days to retain pod logs in CloudWatch"
+  type        = number
+  default     = 7
+}
+
 variable "tags" {
   description = "Additional tags to apply to all resources"
   type        = map(string)

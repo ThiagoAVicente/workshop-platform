@@ -68,6 +68,33 @@ resource "aws_iam_role_policy_attachment" "fargate_AmazonEC2ContainerRegistryRea
   role       = aws_iam_role.fargate.name
 }
 
+# CloudWatch Logs permissions for Fargate's built-in Fluent Bit log router
+resource "aws_iam_policy" "fargate_logging" {
+  name        = "${var.cluster_name}-fargate-logging-policy"
+  description = "Allow Fargate log router to ship pod logs to CloudWatch Logs"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogStream",
+          "logs:CreateLogGroup",
+          "logs:DescribeLogStreams",
+          "logs:PutLogEvents"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "fargate_logging" {
+  role       = aws_iam_role.fargate.name
+  policy_arn = aws_iam_policy.fargate_logging.arn
+}
+
 # ============================================================================
 # AWS Load Balancer Controller IAM Role (IRSA)
 # ============================================================================

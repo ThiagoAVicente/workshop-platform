@@ -71,14 +71,11 @@ data "aws_iam_user" "terraform_ci" {
   user_name = "terraform-ci"
 }
 */
+# Note: The account root ARN is NOT included here. EKS automatically creates
+# an access entry for the cluster creator, and the AWS API does not support
+# importing or describing access entries for the root principal.
 locals {
-  cluster_admin_arns = toset(concat(
-    [
-      "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
-      #data.aws_iam_user.terraform_ci.arn
-    ],
-    var.cluster_admin_arns
-  ))
+  cluster_admin_arns = toset(var.cluster_admin_arns)
 }
 
 resource "aws_eks_access_entry" "admin" {

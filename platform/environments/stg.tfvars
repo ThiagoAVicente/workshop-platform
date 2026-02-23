@@ -37,3 +37,6 @@ aurora_skip_final_snapshot      = false
 aurora_backup_retention_period  = 7
 aurora_backup_schedule          = "cron(0 2 * * ? *)"
 aurora_backup_delete_after_days = 35
+
+# Monitoring
+monitoring_log_retention_days = 7
