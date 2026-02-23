@@ -214,6 +214,35 @@ resource "helm_release" "tempo" {
     value = "0.0.0.0:4318"
   }
 
+  # Enable the metrics-generator so Grafana can query /api/metrics/query_range
+  set {
+    name  = "tempo.metricsGenerator.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "tempo.metricsGenerator.remoteWriteUrl"
+    value = "http://prometheus-server.monitoring.svc.cluster.local:9090/api/v1/write"
+  }
+
+  # Resource requests — Fargate uses these to size the microVM.
+  # Without explicit requests, Fargate assigns the minimum (0.25 vCPU / 0.5 GB)
+  # which causes the pod to crash or fail readiness checks.
+  set {
+    name  = "tempo.resources.requests.cpu"
+    value = "2000m"
+  }
+
+  set {
+    name  = "tempo.resources.requests.memory"
+    value = "2Gi"
+  }
+
+  set {
+    name  = "tempo.resources.limits.memory"
+    value = "2Gi"
+  }
+
   depends_on = [
     aws_eks_fargate_profile.monitoring,
     kubernetes_config_map.aws_logging,
@@ -386,7 +415,7 @@ resource "helm_release" "grafana" {
               name   = "Tempo"
               type   = "tempo"
               uid    = "tempo"
-              url    = "http://tempo.monitoring.svc.cluster.local:3100"
+              url    = "http://tempo.monitoring.svc.cluster.local:3200"
               access = "proxy"
               jsonData = {
                 tracesToLogsV2 = {

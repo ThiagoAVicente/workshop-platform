@@ -97,7 +97,7 @@ spec:
 |------------|------------|----------------------------------------|
 | Prometheus | prometheus | Cluster-internal (`prometheus-server.monitoring.svc.cluster.local:9090`) |
 | CloudWatch | cloudwatch | IRSA (Grafana service account has IAM role with CloudWatch read permissions) |
-| Tempo      | tempo      | Cluster-internal (`tempo.monitoring.svc.cluster.local:3100`) |
+| Tempo      | tempo      | Cluster-internal (`tempo.monitoring.svc.cluster.local:3200`) |
 
 ## Pre-loaded Dashboards
 
@@ -312,8 +312,8 @@ To verify traces are flowing:
 
 ```bash
 # Port-forward Tempo and query the API
-kubectl port-forward -n monitoring svc/tempo 3100:3100
-curl http://localhost:3100/api/search?q=\{\}
+kubectl port-forward -n monitoring svc/tempo 3200:3200
+curl http://localhost:3200/api/search?q=\{\}
 ```
 
 ## Troubleshooting

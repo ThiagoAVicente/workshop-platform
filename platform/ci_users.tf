@@ -118,6 +118,48 @@ resource "aws_eks_access_policy_association" "ci" {
 }
 
 # ============================================================================
+# External Secrets RBAC for CI Users
+# ============================================================================
+
+resource "kubernetes_role" "ci_external_secrets" {
+  for_each = toset(var.projects)
+
+  metadata {
+    name      = "external-secrets-manage"
+    namespace = each.value
+  }
+
+  rule {
+    api_groups = ["external-secrets.io"]
+    resources  = ["externalsecrets"]
+    verbs      = ["get", "list", "watch", "create", "update", "patch", "delete"]
+  }
+
+  depends_on = [kubernetes_namespace.ci]
+}
+
+resource "kubernetes_role_binding" "ci_external_secrets" {
+  for_each = toset(var.projects)
+
+  metadata {
+    name      = "ci-external-secrets-manage"
+    namespace = each.value
+  }
+
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "Role"
+    name      = kubernetes_role.ci_external_secrets[each.key].metadata[0].name
+  }
+
+  subject {
+    kind     = "User"
+    name     = aws_iam_user.ci[each.value].arn
+    api_group = "rbac.authorization.k8s.io"
+  }
+}
+
+# ============================================================================
 # Kubernetes Namespaces
 # ============================================================================
 
