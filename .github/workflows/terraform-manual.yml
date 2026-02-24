@@ -18,6 +18,7 @@ on:
         options:
           - plan
           - apply
+          - destroy
       branch:
         description: 'Branch to run against'
         required: true
@@ -152,14 +153,33 @@ jobs:
         working-directory: ${{ env.TF_WORKING_DIR }}
         continue-on-error: true
 
+      # ----------------------------------------------------------------
+      # Destroy: Tear down all infrastructure
+      # ----------------------------------------------------------------
+      - name: "Destroy: Plan"
+        if: inputs.action == 'destroy'
+        run: |
+          terraform plan -destroy \
+            -var-file="environments/${{ inputs.environment }}.tfvars" \
+            -out=tfplan-destroy \
+            -input=false
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
+      - name: "Destroy: Apply"
+        if: inputs.action == 'destroy'
+        run: terraform apply -auto-approve -input=false tfplan-destroy
+        working-directory: ${{ env.TF_WORKING_DIR }}
+
       - name: Create summary
         run: |
-          echo "## 🎯 Manual ${{ inputs.action }} - ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "## Manual ${{ inputs.action }} - ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ inputs.action }}" == "apply" ]; then
-            echo "### ✅ Apply Successful" >> $GITHUB_STEP_SUMMARY
+            echo "### Apply Successful" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ inputs.action }}" == "destroy" ]; then
+            echo "### Destroy Completed" >> $GITHUB_STEP_SUMMARY
           else
-            echo "### 📋 Plan Completed" >> $GITHUB_STEP_SUMMARY
+            echo "### Plan Completed" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
@@ -169,4 +189,4 @@ jobs:
           echo "**Reason:** ${{ inputs.reason }}" >> $GITHUB_STEP_SUMMARY
           echo "**Executed by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "⚠️ **Note**: This was a manual execution outside the normal CI/CD flow." >> $GITHUB_STEP_SUMMARY
+          echo "**Note**: This was a manual execution outside the normal CI/CD flow." >> $GITHUB_STEP_SUMMARY
