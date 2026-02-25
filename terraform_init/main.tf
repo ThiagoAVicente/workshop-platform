@@ -13,9 +13,11 @@ provider "aws" {
   region = var.aws_region
 }
 
+data "aws_caller_identity" "current" {}
+
 # Compute bucket name based on environment if not explicitly provided
 locals {
-  state_bucket_name = var.state_bucket_name != "" ? var.state_bucket_name : "workshop-ua-${var.environment}-terraform-state"
+  state_bucket_name = var.state_bucket_name != "" ? var.state_bucket_name : "workshop-ua-${var.environment}-terraform-state-${data.aws_caller_identity.current.account_id}"
 }
 
 # S3 bucket for Terraform state
